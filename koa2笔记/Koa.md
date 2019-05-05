@@ -42,8 +42,8 @@ app.listen(9999,()=>console.log('开启服务'))
 **注意**
 
 - `ctx`  (context) 上下文
-  - `ctx.req` 相当于 `ctx.request`
-  - `ctx.res` 相当于 `ctx.response`
+  - `ctx.req` 相当于 `ctx.request`  **但是 二者之间存在一定的区别**
+  - `ctx.res` 相当于 `ctx.response`    **但是 二者之间存在一定的区别**
 
 ## 二、koa 路由
 
@@ -72,7 +72,7 @@ const router = Router()
 // 3、创建服务器
 const app = new Koa()
 
-// 4、处理路由
+// 4、处理路由（路由匹配）
 router.get('/',async(ctx,next)=>{
     ctx.body = 'hello koa'
 })
@@ -92,7 +92,7 @@ app.listen(9999,()=>console.log('启动服务器'))
 
 **注意**
 
-- koa 中的 路由是精确匹配的 即：
+- 1、koa 中的 路由是 **精确匹配** 的 即：
 
 > router.get('/index',async(ctx,next)=>{
 >
@@ -101,6 +101,12 @@ app.listen(9999,()=>console.log('启动服务器'))
 > ​       //  无法 匹配到 'index.html'
 >
 > })
+
+- 2、注意 **启用路由** 的所写的地方
+
+> 必须先是 路由匹配（路由处理） --->  启用路由 ---> 设置端口，开启服务器
+>
+> 否则 在 启用模板引擎 是 会报错（报错信息： `TypeError: ctx.render is not a function`）
 
 ### (二) koa 路由获取 get 传值
 
@@ -118,8 +124,42 @@ app.listen(9999,()=>console.log('启动服务器'))
   ```
 
 
+### (三) koa 路由 获取 post 传值
 
-### (三)  动态路由设置与获取
+- 利用 中间件 `koa-bodyparser`  实现
+
+**使用步骤：**
+
+- 第一步： 下载 引入 `npm i koa-bodyparser`
+- 第二步： 启用
+
+```js
+const Koa = require('koa')
+const Router = require('koa-router')
+// 1、引入 koa-bodyparser
+const bodyParser = require('koa-bodyparser')
+
+// 2、 启用 koa-bodyparser
+app.use(bodyParser())
+
+// 路由匹配
+router.post('/from',async(ctx,next)=>{
+    // 3、获取 post 请求 的数据
+    console.log(ctx.request.body)
+    ctx.body = ctx.request.body
+})
+
+// 启用路由
+app.use(router.routes())
+app.use(router.allowedMethods())
+
+app.listen(9999,()=>console.log('开启服务器'))
+
+```
+
+
+
+### (四)  动态路由设置与获取
 
 #### 1、基本使用
 
@@ -288,9 +328,68 @@ app.listen(9999, () => console.log('http://localhost:9999 服务器已启动'))
 
 ````
 
+## 四、静态资源托管
+
+**使用步骤**
+
+- 第一步： 下载并引入 `npm i koa-static`
+- 第二步： 使用
+
+```js
+const Koa = require('koa')
+const Router = require('koa-router')
+const views = require('koa-views')
+// 引入 koa-static
+const static = require('koa-static')
+const path = require('path')
+
+const app = new Koa()
+const router = Router()
+
+app.use(views('views', { map: { html: 'ejs' } }))
+// 启用 koa-static 的三个方式
+// app.use(static('static'))
+// app.use(static(path.join(__dirname, './static')))
+app.use(static(__dirname + '/static'))
+
+router.get('/index', async (ctx, next) => {
+  await ctx.render('index')
+})
+
+app.use(router.routes())
+app.use(router.allowedMethods())
+
+app.listen(9999, () => console.log('http://localhost:9999 服务器已启动'))
+
+```
+
+**注意：**
+
+- **1、html 中文件引入的路径文件**
+
+> ```js
+> // app.use(static('static)) 设置
+> //  当 请求路径 为：
+> // http://localhost:9999/css/basic.css
+> // 它会 自动去 static文件夹下 寻找 css/basic.css
+> // 因此 html 中文件引入地址 必须 省略  static 路径
+> // 即：举例说明
+> <image src="./static/css/basic.css"> // 错误
+> <image src="css/basic.css"> // 正确
+> ```
+>
+> 
+
+- 2、koa中的静态资源可以配置多个
+
+```js
+app.use(static('static')) // 第一个静态资源配置
+app.use(static('public')) // 第二个静态资源配置
+```
 
 
-## 四、模板引擎
+
+## 五、模板引擎
 
 ### (一) ejs 模板引擎的使用(了解)
 
@@ -301,7 +400,7 @@ app.listen(9999, () => console.log('http://localhost:9999 服务器已启动'))
 - 1、公共信息如何使用
 - 2、
 
-> // 必须要有await render 方法是异步执行的
+> // 必须要有await，因为ctx.render 方法是异步执行的
 >   await ctx.render('index', {
 >
 > ​	title: title
