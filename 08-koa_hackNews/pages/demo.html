@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      let obj = {
+        list: [
+          { id: 1, title: '神话', url: '胡歌', text: '解开我，最神秘的面纱' },
+          { id: 2, title: '卡路里', url: '101', text: '燃烧我的卡路里' },
+          { id: 3, title: '荷塘月色', url: '陈转', text: '6666' }
+        ]
+      }
+
+      console.log(obj.list)
+
+      let id = 1
+      let data = obj.list.filter(item => item.id === id)
+      console.log(data[0])
+    </script>
+  </body>
+</html>

@@ -391,9 +391,7 @@ app.use(static('public')) // 第二个静态资源配置
 
 ## 五、模板引擎
 
-### (一) ejs 模板引擎的使用(了解)
-
-#### 1、使用方法
+#### 使用方法
 
 ​	**注意： **
 
@@ -406,6 +404,10 @@ app.use(static('public')) // 第二个静态资源配置
 > ​	title: title
 >
 >   })
+
+### (一) ejs 模板引擎的使用(了解)
+
+> 
 
 ```js
 //引入 koa模块
@@ -530,5 +532,33 @@ app.listen(3000)
 <%}%>                                  
 ```
 
+### (二) koa-art-template 模板引擎的使用
 
+​	类似于 `express-art-template`
+
+**使用步骤：**
+
+- 第一步：下载 并 引入   ` npm i art-template`&&     `npm i koa-art-template`
+- 第二步： 使用
+
+```js
+const Koa = require('koa')
+const path = require('path')
+
+// 1、 引入 koa-art-template
+const template = require('koa-art-template')
+const app = new Koa()
+
+// 2、 配置 模板引擎
+template(app,{
+    root: path.join(__dirname,'public'), // 模板 所在的 路径
+    extname: '.html', // 模板 后缀名
+    debug: process.env.NODE_ENV !== 'production' // 是否开启 代码调试
+})
+
+// 3、使用
+app.use(async (ctx,next)=>{
+    await ctx.render('index')
+})
+```
 
