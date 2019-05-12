@@ -346,7 +346,7 @@ const path = require('path')
 const app = new Koa()
 const router = Router()
 
-app.use(views('views', { map: { html: 'ejs' } }))
+//app.use(views('views', { map: { html: 'ejs' } }))
 // 启用 koa-static 的三个方式
 // app.use(static('static'))
 // app.use(static(path.join(__dirname, './static')))
@@ -560,5 +560,178 @@ template(app,{
 app.use(async (ctx,next)=>{
     await ctx.render('index')
 })
+```
+
+## 六、对 Cookie 和 Session 的操作
+
+### (一) Cookie 的 写入 和 读取
+
+#### 1、写入 Cookie
+
+- `ctx.cookies.set(key,value,options)`
+
+````js
+ ctx.cookies.set(
+            'MyName','JSPang',{
+                domain:'127.0.0.1', // 写cookie所在的域名
+                path:'/index',       // 写cookie所在的路径
+                maxAge:1000*60*60*24,   // cookie有效时长
+                expires:new Date('2018-12-31'), // cookie失效时间
+                httpOnly:false,  // 是否只用于http请求中获取
+                overwrite:false  // 是否允许重写
+            }
+````
+
+- 注意：
+
+  - **1、Koa 中设置中文 Cookie** 
+
+    利用 `new Buffer()`进行 base64 转换
+
+  ```js
+  console.log(new Buffer('hello, world!').toString('base64'));// 转换成 base64 字符串： aGVsbG8sIHdvcmxkIQ==
+
+  console.log(new Buffer('aGVsbG8sIHdvcmxkIQ==', 'base64').toString());// 还原 base64 字符串： hello, world!
+  ```
+
+#### 2、获取 Cookie
+
+```js
+ctx.cookies.get(key)
+```
+
+### (二) Session 的使用
+
+- 第一步： 安装 并 引入 `npm i koa-session`
+- 第二： 设置官方文档提供的中间件
+
+```js
+const Koa = require('koa')
+const  session = require('koa-session');
+const app = new Koa()
+//配置session的中间件
+app.keys = ['some secret hurr'];   /*cookie的签名*/
+const CONFIG = {
+    key: 'koa:sess', /** 默认 */
+    maxAge: 10000,  /*  cookie的过期时间        【需要修改】  */
+    overwrite: true, /** (boolean) can overwrite or not (default true)    没有效果，默认 */
+    httpOnly: true, /**  true表示只有服务器端可以获取cookie */
+    signed: true, /** 默认 签名 */
+    rolling: true, /** 在每次请求时强行设置 cookie，这将重置 cookie 过期时间（默认：false） 【需要修改】 */
+    renew: false, /** (boolean) renew session when session is nearly expired      【需要修改】*/
+};
+app.use(session(CONFIG, app));
+```
+
+- 使用
+
+```js
+// 设置
+ctx.session.key = value
+ctx.session.username= '张三'
+
+//获取
+ctx.session.key
+ctx.session.username
+
+```
+
+
+
+## 补充：
+
+### (一) 数据读写
+
+- 由于 koa 的 `ctx.render` && `fs`文件读写的操作   都是异步操作，所以，对于文件的读写需要进行 Promise 封装。
+
+```js
+const Koa = require('koa')
+const Router = require('koa-router')
+const template = require('koa-art-template')
+const static = require('koa-static')
+const bodyParser = require('koa-bodyparser')
+const fs = require('fs')
+const path = require('path')
+
+const app = new Koa()
+const router = Router()
+
+template(app, {
+  root: path.join(__dirname, 'pages'), // 模板 所在的 路径
+  extname: '.html', // 模板 后缀名
+  debug: process.env.NODE_ENV !== 'production' // 是否开启 代码调试
+})
+app.use(static(__dirname + '/assets'))
+app.use(bodyParser())
+
+router.get('/', async (ctx, next) => {
+  // ctx.body = '首页'
+  let data = await readData()
+  await ctx.render('index', JSON.parse(data))
+})
+
+router.get('/index', async (ctx, next) => {
+  let data = await readData()
+  await ctx.render('index', JSON.parse(data))
+})
+
+router.get('/details', async (ctx, next) => {
+  let data = await readData()
+  let id = ctx.query.id
+  data = JSON.parse(data).list.find(item => item.id == id)
+  // data = JSON.parse(d)
+  await ctx.render('details', data)
+})
+
+router.get('/submit', async (ctx, next) => {
+  await ctx.render('submit')
+})
+
+router.post('/add', async (ctx, next) => {
+  let info = ctx.request.body
+  console.log(info)
+  let data = await readData()
+
+  data = JSON.parse(data)
+
+  if (data.list.length === 0) {
+    info.id = 1
+  } else {
+    info.id = data.list[data.list.length - 1].id + 1
+  }
+  // console.log(info)
+  data.list.push(info)
+  console.log(data)
+  data = JSON.stringify(data, null, 2)
+  let flag = await writeData(data)
+  if (flag === 'success') {
+    ctx.redirect('/index')
+  }
+})
+
+app.use(router.routes())
+app.use(router.allowedMethods())
+
+app.listen(9999, () => console.log('http://localhost:9999 服务器已启动'))
+// 读取数据的 Promise 操作
+function readData() {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path.join(__dirname, 'data', 'data.json'), (err, data) => {
+      if (err) reject(err)
+      resolve(data)
+    })
+  })
+}
+
+// 写入数据的 Promise 操作
+function writeData(data) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(path.join(__dirname, 'data', 'data.json'), data, err => {
+      if (err) reject(err)
+      resolve('success')
+    })
+  })
+}
+
 ```
 

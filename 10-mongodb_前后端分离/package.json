@@ -1,0 +1,14 @@
+{
+  "name": "10-mongodb",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "art-template": "^4.13.2",
+    "jQuery": "^1.7.4",
+    "koa": "^2.7.0",
+    "koa-art-template": "^1.1.1",
+    "koa-router": "^7.4.0",
+    "koa-static": "^5.0.0"
+  }
+}

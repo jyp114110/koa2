@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>首页</h1>
+    <script src="./jquery-1.12.4.min.js"></script>
+    <script src="./template-web.js"></script>
+
+    <script>
+      $.ajax({
+        url: 'http://localhost:9999/index',
+        dataType: 'json',
+        success: function(info) {
+          console.log(info)
+          let str = template('tmp', { list: info })
+          $('body').append(str)
+        }
+      })
+    </script>
+
+    <script type="text/html" id="tmp">
+
+      <div>{{list.name}}</div>
+      <div>{{list.age}}</div>
+    </script>
+  </body>
+</html>
